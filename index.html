@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Duty Scheduler</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header with Theme Toggle -->
+        <div class="header-container mb-4">
+            <div class="text-center mb-3">
+                <h1 class="fw-bold">Family Duty Scheduler</h1>
+                <p class="text-muted">Generate and share caregiving shift schedules</p>
+            </div>
+            <div class="theme-toggle-container">
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary theme-toggle-btn" title="Toggle dark mode">
+                    🌙 Dark Mode
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Form Section -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-12 col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Create Schedule</h5>
+                        
+                        <form id="scheduleForm">
+                            <!-- Date Input -->
+                            <div class="mb-3">
+                                <label for="scheduleDate" class="form-label fw-bold">Select Date</label>
+                                <input type="date" class="form-control form-control-lg" id="scheduleDate" required>
+                                <small class="text-muted d-block mt-2" id="dayOfWeek">Day of week will appear here</small>
+                            </div>
+
+                            <!-- Start Time Input -->
+                            <div class="mb-3">
+                                <label for="startTime" class="form-label fw-bold">Start Time</label>
+                                <input type="time" class="form-control form-control-lg" id="startTime" value="00:00" required>
+                                <small class="text-muted">Shifts will begin from this time</small>
+                            </div>
+
+                            <!-- Number of People Input -->
+                            <div class="mb-4">
+                                <label for="numPeople" class="form-label fw-bold">Number of People</label>
+                                <input type="number" class="form-control form-control-lg" id="numPeople" min="1" max="20" value="4" required>
+                            </div>
+
+                            <!-- Create Time Slots Button -->
+                            <button type="button" id="createSlotsBtn" class="btn btn-info btn-lg w-100 fw-bold mb-4">
+                                📅 Create Time Slots
+                            </button>
+
+                            <!-- Time Slots Assignment Section (initially hidden) -->
+                            <div id="timeSlotsContainer" style="display: none;" class="mb-4">
+                                <div class="mb-3">
+                                    <!-- <label class="form-label fw-bold">Configure Custom Time Ranges</label> -->
+                                    <small class="d-block mb-3 text-muted">Set each person's start and end times.</small>
+                                </div>
+                                
+                                <!-- Timeline visualization -->
+                                <div id="timelineVisualization" class="timeline-container mb-4" style="display: none;">
+                                    <!-- <div class="timeline-header">24-Hour Timeline</div> -->
+                                    <!-- <div id="timelineChart" class="timeline-chart"> -->
+                                        <!-- Timeline blocks will be generated here -->
+                                    <!-- </div> -->
+                                </div>
+
+                                <!-- Custom time range fields -->
+                                <div id="assignmentFields" class="assignment-fields-container">
+                                    <!-- Custom time range fields will be generated here -->
+                                </div>
+
+                                <!-- Validation status -->
+                                <div id="validationStatus" class="validation-status mb-3" style="display: none;">
+                                    <!-- Validation messages will appear here -->
+                                </div>
+                            </div>
+
+                            <!-- Generate Button (shown after time slots) -->
+                            <button type="submit" id="generateBtn" class="btn btn-primary btn-lg w-100 fw-bold" style="display: none;">
+                                ✓ Generate Schedule
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Display Section (initially hidden) -->
+        <div id="scheduleContainer" class="row justify-content-center mb-5" style="display: none;">
+            <div class="col-12 col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <!-- Schedule content for export -->
+                        <div id="scheduleContent" class="png-export-container">
+                            <div class="schedule-title mb-4">
+                                <h2 id="scheduleTitle" class="fw-bold text-center mb-0"></h2>
+                            </div>
+
+                            <div id="scheduleList" class="schedule-list">
+                                <!-- Schedule entries will be generated here -->
+                            </div>
+                        </div>
+
+                        <!-- Export and Reset Buttons -->
+                        <div class="export-buttons-container mt-4">
+                            <!-- Primary action buttons -->
+                            <div class="d-grid gap-2 mb-3 primary-actions">
+                                <button id="copyTextBtn" class="btn btn-info btn-lg fw-bold" title="Copy schedule as text to clipboard">
+                                    📋 Copy as Text
+                                </button>
+                            </div>
+
+                            <!-- Secondary action buttons -->
+                            <!-- <div class="d-grid gap-2 gap-md-2 mb-3 secondary-actions">
+                                <button id="copyImageBtn" class="btn btn-warning btn-lg fw-bold" title="Copy schedule image to clipboard">
+                                    🖼️ Copy as Image
+                                </button>
+                                <button id="exportBtn" class="btn btn-success btn-lg fw-bold" title="Download schedule as PNG file">
+                                    📥 Download PNG
+                                </button>
+                            </div> -->
+
+                            <!-- Utility buttons -->
+                            <div class="d-grid gap-2">
+                                <button id="resetBtn" class="btn btn-secondary btn-lg fw-bold">
+                                    ↺ Create New
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- html2canvas Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Configuration -->
+    <script src="config.js"></script>
+
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
