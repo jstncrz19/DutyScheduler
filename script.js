@@ -71,15 +71,18 @@ function handleCreateSlots() {
         return;
     }
 
-    // Distribute 24 hours equally among people
-    const totalMinutes = 24 * 60; // 1440 minutes in 24 hours
+    // Get start time offset in minutes
+    const startTimeOffset = timeToMinutes(startTimeInput.value);
+
+    // Calculate total minutes from start time to midnight (end of day)
+    const totalMinutes = (24 * 60) - startTimeOffset;
     const minutesPerPerson = totalMinutes / numPeople;
 
     customTimeRanges = [];
 
     for (let i = 0; i < numPeople; i++) {
-        const startMinutes = i * minutesPerPerson;
-        const endMinutes = (i + 1) * minutesPerPerson;
+        const startMinutes = startTimeOffset + (i * minutesPerPerson);
+        const endMinutes = startTimeOffset + ((i + 1) * minutesPerPerson);
 
         customTimeRanges.push({
             index: i,
