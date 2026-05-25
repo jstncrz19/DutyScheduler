@@ -9,7 +9,6 @@ const dayOfWeekDisplay = document.getElementById('dayOfWeek');
 const timeSlotsContainer = document.getElementById('timeSlotsContainer');
 const assignmentFields = document.getElementById('assignmentFields');
 const timelineVisualization = document.getElementById('timelineVisualization');
-const timelineChart = document.getElementById('timelineChart');
 const validationStatus = document.getElementById('validationStatus');
 const scheduleContainer = document.getElementById('scheduleContainer');
 const scheduleContent = document.getElementById('scheduleContent');
@@ -17,7 +16,6 @@ const scheduleTitle = document.getElementById('scheduleTitle');
 const scheduleList = document.getElementById('scheduleList');
 const exportBtn = document.getElementById('exportBtn');
 const resetBtn = document.getElementById('resetBtn');
-const themeToggle = document.getElementById('themeToggle');
 const copyTextBtn = document.getElementById('copyTextBtn');
 const copyImageBtn = document.getElementById('copyImageBtn');
 const createSlotsBtn = document.getElementById('createSlotsBtn');
@@ -35,9 +33,6 @@ let customTimeRanges = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize theme from localStorage
-    initializeTheme();
-
     // Set today's date as default
     const today = new Date();
     scheduleDateInput.value = today.toISOString().split('T')[0];
@@ -47,11 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleDateInput.addEventListener('change', updateDayOfWeek);
     createSlotsBtn.addEventListener('click', handleCreateSlots);
     scheduleForm.addEventListener('submit', handleGenerateSchedule);
-    exportBtn.addEventListener('click', handleExportPNG);
-    copyTextBtn.addEventListener('click', handleCopyAsText);
-    copyImageBtn.addEventListener('click', handleCopyAsImage);
-    resetBtn.addEventListener('click', handleReset);
-    themeToggle.addEventListener('click', toggleTheme);
+    if (exportBtn) exportBtn.addEventListener('click', handleExportPNG);
+    if (copyTextBtn) copyTextBtn.addEventListener('click', handleCopyAsText);
+    if (copyImageBtn) copyImageBtn.addEventListener('click', handleCopyAsImage);
+    if (resetBtn) resetBtn.addEventListener('click', handleReset);
 });
 
 /**
@@ -77,11 +71,9 @@ function handleCreateSlots() {
         return;
     }
 
-    // Calculate required total minutes based on Start Time
-    const startTimeStr = startTimeInput.value;
-    const [startHour] = startTimeStr.split(':').map(Number);
-    const requiredTotalMinutes = (24 - startHour) * 60;
-    const minutesPerPerson = requiredTotalMinutes / numPeople;
+    // Distribute 24 hours equally among people
+    const totalMinutes = 24 * 60; // 1440 minutes in 24 hours
+    const minutesPerPerson = totalMinutes / numPeople;
 
     customTimeRanges = [];
 
@@ -104,7 +96,6 @@ function handleCreateSlots() {
 
     // Show time slots container and generate button
     timeSlotsContainer.style.display = 'block';
-    timelineVisualization.style.display = 'block';
     generateBtn.style.display = 'block';
 
     // Initial validation
@@ -265,11 +256,6 @@ function validateTimeRanges() {
         return { valid: false, message: 'Please assign at least one person' };
     }
 
-    // Get required total hours based on Start Time
-    const startTimeStr = startTimeInput.value;
-    const [startHour] = startTimeStr.split(':').map(Number);
-    const requiredTotalMinutes = (24 - startHour) * 60;
-
     // Convert ranges to minutes for comparison
     const processedRanges = ranges.map(r => ({
         person: r.person,
@@ -302,28 +288,8 @@ function validateTimeRanges() {
         }
     }
 
-    // Check for required coverage based on start time
-    const sortedRanges = processedRanges.sort((a, b) => a.start - b.start);
-    let totalCoverage = 0;
-
-    for (const range of sortedRanges) {
-        let duration = range.end - range.start;
-        if (duration <= 0) duration += 24 * 60;
-        totalCoverage += duration;
-    }
-
-    if (totalCoverage !== requiredTotalMinutes) {
-        const hours = Math.floor(requiredTotalMinutes / 60);
-        const currentHours = Math.floor(totalCoverage / 60);
-        const currentMinutes = totalCoverage % 60;
-        return {
-            valid: false,
-            message: `Total coverage is ${currentHours}h ${currentMinutes}m. Must equal exactly ${hours} hours (24 - start time).`
-        };
-    }
-
-    const hours = Math.floor(requiredTotalMinutes / 60);
-    return { valid: true, message: `✓ Schedule is valid - ${hours} hours fully covered with no overlaps` };
+    // No overlaps found - schedule is valid
+    return { valid: true, message: '✓ Schedule is valid - no overlaps' };
 }
 
 /**
@@ -362,38 +328,12 @@ function updateValidationStatus() {
  * Update timeline visualization
  */
 function updateTimeline() {
-    timelineChart.innerHTML = '';
+    // Skip if timeline visualization is not in the DOM
+    if (!timelineVisualization) return;
 
     const ranges = customTimeRanges.filter(r => r.person.trim());
 
-    if (ranges.length === 0) {
-        timelineChart.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Assign people to see timeline</div>';
-        return;
-    }
-
-    // Sort by start time for visualization
-    const sortedRanges = [...ranges].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-
-    sortedRanges.forEach((range, idx) => {
-        const block = document.createElement('div');
-        block.className = `timeline-block ${shiftColors[idx % shiftColors.length]}`;
-
-        let startMins = timeToMinutes(range.startTime);
-        let endMins = timeToMinutes(range.endTime);
-
-        if (endMins <= startMins) {
-            endMins += 24 * 60;
-        }
-
-        const durationMins = endMins - startMins;
-        const percentWidth = (durationMins / (24 * 60)) * 100;
-
-        block.style.flex = `0 0 ${percentWidth}%`;
-        block.title = `${range.person}: ${range.startTime}–${range.endTime}`;
-        block.textContent = range.person.substring(0, 6);
-
-        timelineChart.appendChild(block);
-    });
+    // Timeline visualization code skipped when not in DOM
 }
 
 /**
@@ -669,40 +609,6 @@ function handleReset() {
     setTimeout(() => {
         scheduleDateInput.focus();
     }, 100);
-}
-
-/**
- * Initialize theme from localStorage
- */
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('dutySchedulerTheme') || 'light';
-    setTheme(savedTheme);
-}
-
-/**
- * Set theme (light or dark)
- */
-function setTheme(theme) {
-    const html = document.documentElement;
-    
-    if (theme === 'dark') {
-        html.setAttribute('data-theme', 'dark');
-        themeToggle.textContent = '☀️ Light Mode';
-        localStorage.setItem('dutySchedulerTheme', 'dark');
-    } else {
-        html.removeAttribute('data-theme');
-        themeToggle.textContent = '🌙 Dark Mode';
-        localStorage.setItem('dutySchedulerTheme', 'light');
-    }
-}
-
-/**
- * Toggle theme between light and dark
- */
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
 }
 
 /**
